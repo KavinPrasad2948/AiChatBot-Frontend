@@ -1,35 +1,35 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import AvatarVideo from './components/VideoComponent';
+import { NavbarDefault } from './components/Navbar';
+import ChatInterface from './components/ChatInterface';
+import VoiceRecorder from './components/VoiceInput';
 
-function App() {
-  const [count, setCount] = useState(0)
+const App: React.FC = () => {
+  const [isRecording, setIsRecording] = useState(false);
+
+  const handleStartRecording = () => {
+    setIsRecording(true);
+    // Add voice recognition start logic here
+  };
+
+  const handleStopRecording = () => {
+    setIsRecording(false);
+    // Add voice recognition stop logic here
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="bg-gray-100 min-h-screen">
+      <NavbarDefault />
+      <div className="container mx-auto py-8">
+        <h1 className="text-center text-3xl font-bold text-gray-800 mb-4">Chatbot with Avatar</h1>
+        <AvatarVideo videoId="fb1cf48701794d7eb180efed032c0df2" />
+        {/* <ChatInterface /> */}
+        <div className="flex justify-center mt-4">
+          <VoiceRecorder onStart={handleStartRecording} onStop={handleStopRecording} isRecording={isRecording} />
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    </div>
+  );
+};
 
-export default App
+export default App;
