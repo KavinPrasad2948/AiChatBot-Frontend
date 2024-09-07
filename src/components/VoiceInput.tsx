@@ -1,14 +1,48 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const VoiceRecorder: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [responseAudioUrl, setResponseAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    // Initialize WebSocket connection
+    wsRef.current = new WebSocket('ws://localhost:3000');
+
+    wsRef.current.onmessage = (event) => {
+      try {
+        // Handle the audio response from the backend
+        const audioBlob = new Blob([event.data], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setResponseAudioUrl(audioUrl);
+      } catch (error) {
+        console.error('Error handling WebSocket message:', error);
+      }
+    };
+
+    wsRef.current.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+
+    wsRef.current.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return () => {
+      wsRef.current?.close();
+    };
+  }, []);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       const recorder = new MediaRecorder(stream);
       setMediaRecorder(recorder);
 
@@ -18,18 +52,21 @@ const VoiceRecorder: React.FC = () => {
         audioChunks.push(event.data);
       };
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
         const audioUrl = URL.createObjectURL(audioBlob);
         if (audioRef.current) {
           audioRef.current.src = audioUrl; // Assign recorded audio to the audio element
         }
+
+        // Send the audio file to the backend using WebSocket
+        sendAudioToBackend(audioBlob);
       };
 
       recorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error('Error accessing the microphone', error);
+      console.error('Error accessing the microphone:', error);
     }
   };
 
@@ -37,6 +74,14 @@ const VoiceRecorder: React.FC = () => {
     if (mediaRecorder) {
       mediaRecorder.stop();
       setIsRecording(false);
+    }
+  };
+
+  const sendAudioToBackend = (audioBlob: Blob) => {
+    if (wsRef.current) {
+      wsRef.current.send(audioBlob);
+    } else {
+      console.error('WebSocket connection not established');
     }
   };
 
@@ -63,6 +108,14 @@ const VoiceRecorder: React.FC = () => {
 
       {/* Audio playback after recording */}
       <audio ref={audioRef} controls className="mt-4 mx-auto" />
+
+      {/* Playback of the response audio */}
+      {responseAudioUrl && (
+        <div className="mt-4">
+          <h3 className="text-xl font-bold">Response Audio</h3>
+          <audio src={responseAudioUrl} controls className="mt-2 mx-auto" autoPlay />
+        </div>
+      )}
     </div>
   );
 };
