@@ -9,7 +9,7 @@ const VoiceRecorder: React.FC = () => {
 
   useEffect(() => {
     // Initialize WebSocket connection
-    wsRef.current = new WebSocket('ws://localhost:3000');
+    wsRef.current = new WebSocket('https://chatbot-backend-tqot.onrender.com');
 
     wsRef.current.onmessage = (event) => {
       try {
